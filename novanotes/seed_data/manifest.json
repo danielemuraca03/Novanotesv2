@@ -1,0 +1,26 @@
+[
+  {
+    "file": "microeconomics_summary.pdf",
+    "title": "Microeconomics I — Midterm Summary",
+    "course": "Microeconomics I",
+    "professor": "Prof. Santos",
+    "year": 2024,
+    "description": "Comprehensive summary of supply/demand, elasticity, and market equilibrium for the midterm."
+  },
+  {
+    "file": "statistics_cheatsheet.pdf",
+    "title": "Statistics — Probability Cheat Sheet",
+    "course": "Statistics",
+    "professor": "Prof. Ferreira",
+    "year": 2024,
+    "description": "Quick reference for probability distributions, hypothesis testing, and confidence intervals."
+  },
+  {
+    "file": "accounting_notes.pdf",
+    "title": "Financial Accounting — Full Notes",
+    "course": "Financial Accounting",
+    "professor": "Prof. Costa",
+    "year": 2025,
+    "description": "Lecture notes covering balance sheets, income statements, and double-entry bookkeeping."
+  }
+]
