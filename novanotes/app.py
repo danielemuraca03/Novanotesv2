@@ -1,5 +1,5 @@
 """
-NovaNotes — Main entry point.
+NovaNotes — Main entry point / Home page.
 Run with: streamlit run app.py
 """
 
@@ -7,98 +7,124 @@ import streamlit as st
 import db
 import seed
 from utils.style import get_custom_css
-from utils.email_verify import handle_verification
-from config import ADMIN_EMAILS
+from utils.navbar import render_navbar
 
-# ──────────────────────────────────────────────
-# Page config (must be first Streamlit command)
-# ──────────────────────────────────────────────
 st.set_page_config(
     page_title="NovaNotes",
     page_icon="📚",
-    layout="centered",
+    layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# ──────────────────────────────────────────────
-# Inject custom CSS
-# ──────────────────────────────────────────────
 st.markdown(get_custom_css(), unsafe_allow_html=True)
 
-# ──────────────────────────────────────────────
-# Initialise database on first run
-# ──────────────────────────────────────────────
 db.init_tables()
 seed.seed_demo_notes()
 
-# ──────────────────────────────────────────────
-# Handle email verification tokens in URL
-# ──────────────────────────────────────────────
-handle_verification()
-
-# ──────────────────────────────────────────────
-# Session state defaults
-# ──────────────────────────────────────────────
 if "user_id" not in st.session_state:
     st.session_state.user_id = None
     st.session_state.username = None
     st.session_state.is_admin = False
     st.session_state.points = 0
 
-# ──────────────────────────────────────────────
-# Sidebar: user info + logout
-# ──────────────────────────────────────────────
+# ── Sidebar ──────────────────────────────────────
 with st.sidebar:
-    st.title("📚 NovaNotes")
-    st.caption("Share knowledge, earn points")
+    st.markdown(
+        '<span class="sidebar-brand">📚 NovaNotes</span>'
+        '<span class="sidebar-tagline">Share knowledge, earn points</span>',
+        unsafe_allow_html=True,
+    )
     st.divider()
 
     if st.session_state.user_id:
-        st.markdown(f"👋 **{st.session_state.username}**")
-
-        # Refresh points from DB
+        st.markdown(
+            f'<span class="sidebar-user">👤 {st.session_state.username}</span>',
+            unsafe_allow_html=True,
+        )
         st.session_state.points = db.get_points_balance(st.session_state.user_id)
         st.markdown(
-            f'<span class="points-badge">⭐ {st.session_state.points} points</span>',
+            f'<span class="points-badge">⭐ {st.session_state.points} pts</span>',
             unsafe_allow_html=True,
         )
         st.divider()
-
         if st.button("🚪 Log out", use_container_width=True):
-            for key in ["user_id", "username", "is_admin", "points"]:
-                st.session_state[key] = None if key != "points" else 0
+            for key in ["user_id", "username", "is_admin"]:
+                st.session_state[key] = None
             st.session_state.is_admin = False
+            st.session_state.points = 0
             st.rerun()
     else:
-        st.info("Log in to upload and download notes.")
+        st.markdown(
+            '<span style="font-size:13px; color:#5c5c88;">Log in to upload and download notes.</span>',
+            unsafe_allow_html=True,
+        )
 
+# ── Top navbar ───────────────────────────────────
+render_navbar()
 
-# ──────────────────────────────────────────────
-# Main content area (landing page)
-# ──────────────────────────────────────────────
+# ── Main content ──────────────────────────────────
 if st.session_state.user_id is None:
-    st.markdown("# Welcome to NovaNotes 📚")
-    st.markdown(
-        """
-        The platform where **Nova SBE students** share class notes,
-        study tips, and course reviews.
+    # Hero banner
+    st.markdown("""
+    <div class="hero-banner">
+        <h1>📚 NovaNotes</h1>
+        <p>
+            The study platform for <span class="hero-accent"><strong>Nova SBE students</strong></span>.<br>
+            Share class notes, discover resources, and read honest course reviews.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
-        **How it works:**
-        - 🎁 Get **20 free points** when you sign up
-        - 📤 **Earn 10 points** for every note you upload
-        - 📥 **Spend 5 points** to download a note
-        - ⭐ **Earn 2 points** when someone rates your note highly
+    # Search box
+    st.markdown('<p class="home-search-label">🔍 Find notes</p>', unsafe_allow_html=True)
+    with st.form("home_search_form", clear_on_submit=False):
+        col_s, col_b = st.columns([5, 1])
+        with col_s:
+            home_search = st.text_input(
+                "Search",
+                placeholder="Search for notes, courses, professors...",
+                label_visibility="collapsed",
+            )
+        with col_b:
+            search_submitted = st.form_submit_button("Search", use_container_width=True)
 
-        👉 Head to the **Login** page in the sidebar to get started.
-        """
-    )
+    if search_submitted:
+        if home_search.strip():
+            st.session_state["home_search"] = home_search.strip()
+        st.switch_page("pages/2_Browse.py")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # How it works — feature cards
+    st.markdown('<p class="home-search-label">How it works</p>', unsafe_allow_html=True)
+    col1, col2, col3, col4 = st.columns(4)
+    features = [
+        ("🎁", "20 free pts", "Awarded instantly on sign-up"),
+        ("📤", "Earn 10 pts", "Every time you upload a note"),
+        ("📥", "Spend 5 pts", "To download any document"),
+        ("⭐", "Earn 2 pts", "When your notes are rated highly"),
+    ]
+    for col, (icon, title, desc) in zip([col1, col2, col3, col4], features):
+        with col:
+            st.markdown(f"""
+            <div class="feature-card">
+                <div class="fc-icon">{icon}</div>
+                <div class="fc-title">{title}</div>
+                <div class="fc-desc">{desc}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.info("👉 Head to **Login** in the sidebar to get started.")
+
 else:
-    st.markdown(f"# Welcome back, {st.session_state.username}! 👋")
+    st.markdown(f"## Welcome back, {st.session_state.username}! 👋")
+    st.caption("Here's a snapshot of your activity.")
+    st.markdown("<br>", unsafe_allow_html=True)
 
-    # Quick stats
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric("Your points", f"⭐ {st.session_state.points}")
+        st.metric("Points balance", f"⭐ {st.session_state.points}")
     with col2:
         my_notes = db.get_notes_by_user(st.session_state.user_id)
         st.metric("Notes uploaded", len(my_notes))
@@ -107,4 +133,21 @@ else:
         st.metric("Reviews written", len(my_reviews))
 
     st.divider()
-    st.markdown("Use the **sidebar** to navigate to Browse, Upload, Reviews, or your Profile.")
+
+    # Logged-in search shortcut
+    st.markdown('<p class="home-search-label">🔍 Find notes</p>', unsafe_allow_html=True)
+    with st.form("home_search_form_auth", clear_on_submit=False):
+        col_s, col_b = st.columns([5, 1])
+        with col_s:
+            home_search = st.text_input(
+                "Search",
+                placeholder="Search for notes, courses, professors...",
+                label_visibility="collapsed",
+            )
+        with col_b:
+            search_submitted = st.form_submit_button("Search", use_container_width=True)
+
+    if search_submitted:
+        if home_search.strip():
+            st.session_state["home_search"] = home_search.strip()
+        st.switch_page("pages/2_Browse.py")

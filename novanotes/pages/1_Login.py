@@ -7,11 +7,11 @@ import bcrypt
 import db
 from config import ALLOWED_EMAIL_DOMAIN, INITIAL_POINTS, ADMIN_EMAILS
 from utils.style import get_custom_css
-from utils.email_verify import generate_token, send_verification_email, handle_verification
+from utils.navbar import render_navbar
 
-st.set_page_config(page_title="NovaNotes — Login", page_icon="📚", layout="centered")
+st.set_page_config(page_title="NovaNotes — Login", page_icon="📚", layout="wide")
 st.markdown(get_custom_css(), unsafe_allow_html=True)
-handle_verification()
+render_navbar()
 
 # ── If already logged in, redirect ──
 if st.session_state.get("user_id"):
@@ -20,8 +20,10 @@ if st.session_state.get("user_id"):
     st.stop()
 
 st.markdown("# 🔐 Login or Register")
+st.caption(f"Access is restricted to **@{ALLOWED_EMAIL_DOMAIN}** addresses.")
+st.markdown("<br>", unsafe_allow_html=True)
 
-tab_login, tab_register = st.tabs(["Login", "Register"])
+tab_login, tab_register = st.tabs(["Login", "Create account"])
 
 # ══════════════════════════════════════════════
 #  LOGIN
@@ -43,15 +45,12 @@ with tab_login:
                 st.error("This account has been suspended.")
             elif not bcrypt.checkpw(password.encode(), user["password_hash"].encode()):
                 st.error("Incorrect password.")
-            elif not user["is_verified"]:
-                st.warning("Please verify your email first. Check your inbox.")
             else:
-                # Successful login
                 st.session_state.user_id = user["id"]
                 st.session_state.username = user["username"]
                 st.session_state.is_admin = bool(user["is_admin"])
                 st.session_state.points = user["points"]
-                st.success("Logged in!")
+                st.success("Logged in successfully!")
                 st.rerun()
 
 # ══════════════════════════════════════════════
@@ -59,8 +58,8 @@ with tab_login:
 # ══════════════════════════════════════════════
 with tab_register:
     with st.form("register_form"):
-        reg_username = st.text_input("Display name", placeholder="Maria S.")
-        reg_email = st.text_input("Nova SBE email", placeholder="12345@novasbe.pt")
+        reg_username = st.text_input("Display name", placeholder="E.g. Maria S.")
+        reg_email = st.text_input("Nova SBE email", placeholder="E.g. 12345@novasbe.pt")
         reg_password = st.text_input("Password", type="password", key="reg_pw")
         reg_confirm = st.text_input("Confirm password", type="password", key="reg_cf")
         submitted_reg = st.form_submit_button("Create account", use_container_width=True)
@@ -88,13 +87,9 @@ with tab_register:
             for err in errors:
                 st.error(err)
         else:
-            # Hash password
             pw_hash = bcrypt.hashpw(reg_password.encode(), bcrypt.gensalt()).decode()
-
-            # Check if admin
             is_admin = email_clean in ADMIN_EMAILS
 
-            # Create user
             user_id = db.create_user(
                 email=email_clean,
                 username=reg_username.strip(),
@@ -103,22 +98,7 @@ with tab_register:
                 is_admin=is_admin,
             )
 
-            # Log the signup bonus
+            db.verify_user(user_id)
             db.award_points(user_id, INITIAL_POINTS, "Signup bonus")
 
-            # Generate and send verification token
-            token = generate_token()
-            db.create_verification_token(user_id, token)
-
-            email_sent = send_verification_email(email_clean, token)
-
-            if email_sent:
-                st.success(
-                    "Account created! Check your email for a verification link. "
-                    "You must verify before logging in."
-                )
-            else:
-                db.verify_user(user_id)
-                st.success(
-                    "Account created! You can now log in."
-                )
+            st.success(f"Account created! You received **{INITIAL_POINTS} pts** as a welcome bonus. Log in now.")

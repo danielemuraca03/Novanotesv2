@@ -51,13 +51,6 @@ novanotes/
     └── secrets.toml        ← SMTP credentials (gitignored)
 ```
 
-## Team Division
-
-| Weeks | Pair | What to build |
-|-------|------|---------------|
-| 1–2   | Pair 1 (A + B) | Login, registration, email verify, upload, browse, download, points engine |
-| 3–4   | Pair 2 (C + D) | Reviews, profile, leaderboard, admin panel, flagging, UI polish, deploy |
-
 ## Deploying to Streamlit Cloud
 
 1. Push your code to GitHub
