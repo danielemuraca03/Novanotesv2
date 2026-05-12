@@ -14,11 +14,11 @@ from config import (
     POINTS_PER_UPLOAD,
 )
 from utils.style import get_custom_css
-from utils.navbar import render_navbar
+from utils.navbar import render_top_nav
 
-st.set_page_config(page_title="NovaNotes — Upload", page_icon="📚", layout="wide")
+st.set_page_config(page_title="NovaNotes — Upload", page_icon="📚", layout="wide", initial_sidebar_state="collapsed")
 st.markdown(get_custom_css(), unsafe_allow_html=True)
-render_navbar()
+render_top_nav("Upload")
 
 # ── Login guard ──
 if not st.session_state.get("user_id"):

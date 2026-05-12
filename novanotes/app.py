@@ -7,13 +7,13 @@ import streamlit as st
 import db
 import seed
 from utils.style import get_custom_css
-from utils.navbar import render_navbar
+from utils.navbar import render_top_nav
 
 st.set_page_config(
     page_title="NovaNotes",
     page_icon="📚",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 st.markdown(get_custom_css(), unsafe_allow_html=True)
@@ -27,40 +27,11 @@ if "user_id" not in st.session_state:
     st.session_state.is_admin = False
     st.session_state.points = 0
 
-# ── Sidebar ──────────────────────────────────────
-with st.sidebar:
-    st.markdown(
-        '<span class="sidebar-brand">📚 NovaNotes</span>'
-        '<span class="sidebar-tagline">Share knowledge, earn points</span>',
-        unsafe_allow_html=True,
-    )
-    st.divider()
-
-    if st.session_state.user_id:
-        st.markdown(
-            f'<span class="sidebar-user">👤 {st.session_state.username}</span>',
-            unsafe_allow_html=True,
-        )
-        st.session_state.points = db.get_points_balance(st.session_state.user_id)
-        st.markdown(
-            f'<span class="points-badge">⭐ {st.session_state.points} pts</span>',
-            unsafe_allow_html=True,
-        )
-        st.divider()
-        if st.button("🚪 Log out", use_container_width=True):
-            for key in ["user_id", "username", "is_admin"]:
-                st.session_state[key] = None
-            st.session_state.is_admin = False
-            st.session_state.points = 0
-            st.rerun()
-    else:
-        st.markdown(
-            '<span style="font-size:13px; color:#5c5c88;">Log in to upload and download notes.</span>',
-            unsafe_allow_html=True,
-        )
+if st.session_state.user_id:
+    st.session_state.points = db.get_points_balance(st.session_state.user_id)
 
 # ── Top navbar ───────────────────────────────────
-render_navbar()
+render_top_nav("Home")
 
 # ── Main content ──────────────────────────────────
 if st.session_state.user_id is None:
@@ -115,7 +86,7 @@ if st.session_state.user_id is None:
             """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
-    st.info("👉 Head to **Login** in the sidebar to get started.")
+    st.info("👉 Click **Login** in the top nav to get started.")
 
 else:
     st.markdown(f"## Welcome back, {st.session_state.username}! 👋")

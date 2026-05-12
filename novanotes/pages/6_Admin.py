@@ -6,11 +6,11 @@ import html as html_lib
 import streamlit as st
 import db
 from utils.style import get_custom_css
-from utils.navbar import render_navbar
+from utils.navbar import render_top_nav
 
-st.set_page_config(page_title="NovaNotes — Admin", page_icon="📚", layout="wide")
+st.set_page_config(page_title="NovaNotes — Admin", page_icon="📚", layout="wide", initial_sidebar_state="collapsed")
 st.markdown(get_custom_css(), unsafe_allow_html=True)
-render_navbar()
+render_top_nav("Admin")
 
 # ── Admin guard ──
 if not st.session_state.get("user_id") or not st.session_state.get("is_admin"):

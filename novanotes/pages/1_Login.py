@@ -7,16 +7,16 @@ import bcrypt
 import db
 from config import ALLOWED_EMAIL_DOMAIN, INITIAL_POINTS, ADMIN_EMAILS
 from utils.style import get_custom_css
-from utils.navbar import render_navbar
+from utils.navbar import render_top_nav
 
-st.set_page_config(page_title="NovaNotes — Login", page_icon="📚", layout="wide")
+st.set_page_config(page_title="NovaNotes — Login", page_icon="📚", layout="wide", initial_sidebar_state="collapsed")
 st.markdown(get_custom_css(), unsafe_allow_html=True)
-render_navbar()
+render_top_nav("Login")
 
 # ── If already logged in, redirect ──
 if st.session_state.get("user_id"):
     st.success(f"You're already logged in as **{st.session_state.username}**.")
-    st.info("Use the sidebar to navigate.")
+    st.info("Use the top navigation to move around.")
     st.stop()
 
 st.markdown("# 🔐 Login or Register")
@@ -94,7 +94,7 @@ with tab_register:
                 email=email_clean,
                 username=reg_username.strip(),
                 password_hash=pw_hash,
-                initial_points=INITIAL_POINTS,
+                initial_points=0,
                 is_admin=is_admin,
             )
 

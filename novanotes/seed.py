@@ -13,7 +13,6 @@ import db
 from config import UPLOAD_FOLDER
 
 SEED_DIR = os.path.join(os.path.dirname(__file__), "seed_data")
-SEED_FILES_DIR = os.path.join(SEED_DIR, "manifest.json")
 SEED_USER_EMAIL = "seed@novanotes.internal"
 
 

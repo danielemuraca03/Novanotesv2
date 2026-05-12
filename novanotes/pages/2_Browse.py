@@ -5,13 +5,13 @@ NovaNotes — Page 2: Browse Notes
 import html as html_lib
 import streamlit as st
 import db
-from config import POINTS_PER_DOWNLOAD
+from config import POINTS_PER_DOWNLOAD, POINTS_PER_UPVOTE
 from utils.style import get_custom_css
-from utils.navbar import render_navbar
+from utils.navbar import render_top_nav
 
-st.set_page_config(page_title="NovaNotes — Browse", page_icon="📚", layout="wide")
+st.set_page_config(page_title="NovaNotes — Browse", page_icon="📚", layout="wide", initial_sidebar_state="collapsed")
 st.markdown(get_custom_css(), unsafe_allow_html=True)
-render_navbar()
+render_top_nav("Browse Notes")
 
 st.markdown("# 📖 Browse notes")
 
@@ -96,7 +96,7 @@ for note in notes:
 
     with st.expander("View details & download"):
         if note["description"]:
-            st.write(html_lib.escape(note["description"]))
+            st.text(note["description"])
 
         col_a, col_b = st.columns(2)
         with col_a:
@@ -163,8 +163,7 @@ for note in notes:
             )
             if st.button("Submit rating", key=f"rate_btn_{note['id']}"):
                 db.add_rating(st.session_state.user_id, note["id"], selected_stars)
-                if selected_stars >= 4:
-                    from config import POINTS_PER_UPVOTE
+                if selected_stars >= 4 and existing_rating is None:
                     db.award_points(
                         note["user_id"],
                         POINTS_PER_UPVOTE,

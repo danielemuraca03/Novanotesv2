@@ -15,7 +15,7 @@ def get_custom_css():
 
     /* ─── Layout ─── */
     .main .block-container {
-        padding-top: 72px !important;
+        padding-top: 1.5rem !important;
         padding-bottom: 4rem !important;
         padding-left: 2.5rem !important;
         padding-right: 2.5rem !important;
@@ -24,93 +24,17 @@ def get_custom_css():
 
     /* ─── Remove Streamlit chrome ─── */
     #MainMenu, footer { visibility: hidden; }
-    /* Keep overflow visible so the sidebar collapsed control can escape the zero-height header */
-    header[data-testid="stHeader"] { visibility: hidden; height: 0; overflow: visible !important; }
+    header[data-testid="stHeader"] { display: none !important; height: 0 !important; }
 
-    /* Restore the sidebar re-open toggle — sits inside the fixed navbar strip */
+    /* ─── Hide sidebar entirely ─── */
+    [data-testid="stSidebar"],
+    [data-testid="stSidebarNav"],
     [data-testid="stSidebarCollapsedControl"],
     [data-testid="collapsedControl"] {
-        visibility: visible !important;
-        opacity: 1 !important;
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        height: 64px !important;
-        padding: 0 14px !important;
-        z-index: 1001 !important;
-        background: transparent !important;
-    }
-    /* Make every descendant of the toggle visible too (overrides inherited visibility:hidden from header) */
-    [data-testid="stSidebarCollapsedControl"] *,
-    [data-testid="collapsedControl"] * {
-        visibility: visible !important;
-        opacity: 1 !important;
-    }
-
-    /* ══════════════════════════════════════════
-       SIDEBAR
-    ══════════════════════════════════════════ */
-    [data-testid="stSidebar"] {
-        background: #1a1a2e;
-    }
-    [data-testid="stSidebar"] * {
-        color: #b0b0c8 !important;
-    }
-    /* Brand text overrides */
-    [data-testid="stSidebar"] .sidebar-brand {
-        color: #ffffff !important;
-        font-size: 19px !important;
-        font-weight: 700 !important;
-        line-height: 1.3 !important;
-        display: block;
-    }
-    [data-testid="stSidebar"] .sidebar-tagline {
-        color: #5c5c88 !important;
-        font-size: 12px !important;
-        display: block;
-        margin-top: 3px;
-    }
-    [data-testid="stSidebar"] .sidebar-user {
-        color: #e0e0f0 !important;
-        font-size: 14px !important;
-        font-weight: 500 !important;
-    }
-    [data-testid="stSidebar"] hr {
-        border-color: rgba(255,255,255,0.07) !important;
-        margin: 0.8rem 0 !important;
-    }
-    /* Sidebar buttons */
-    [data-testid="stSidebar"] .stButton > button {
-        background: rgba(255,255,255,0.05) !important;
-        color: #b0b0c8 !important;
-        border: 1px solid rgba(255,255,255,0.09) !important;
-        font-size: 13px !important;
-        padding: 0.35rem 0.75rem !important;
-        transition: background 0.15s !important;
-    }
-    [data-testid="stSidebar"] .stButton > button:hover {
-        background: rgba(255,255,255,0.11) !important;
-        border-color: rgba(255,255,255,0.16) !important;
-        color: #e0e0f0 !important;
-        transform: none !important;
-        box-shadow: none !important;
-    }
-    /* Sidebar points badge */
-    [data-testid="stSidebar"] .points-badge {
-        background: rgba(0,171,107,0.15) !important;
-        color: #00cc80 !important;
-        border-color: rgba(0,171,107,0.28) !important;
-    }
-    /* Active page nav item */
-    [data-testid="stSidebarNavItems"] [aria-selected="true"] span {
-        color: #00cc80 !important;
-    }
-    [data-testid="stSidebarNavItems"] a {
-        border-radius: 6px;
-        transition: background 0.15s;
-    }
-    [data-testid="stSidebarNavItems"] a:hover {
-        background: rgba(255,255,255,0.06) !important;
+        display: none !important;
+        visibility: hidden !important;
+        width: 0 !important;
+        min-width: 0 !important;
     }
 
     /* ══════════════════════════════════════════
@@ -505,99 +429,87 @@ def get_custom_css():
     .pts-row:last-child { border-bottom: none; }
 
     /* ══════════════════════════════════════════
-       FIXED FULL-WIDTH NAVBAR
-       Identified by the NovaNotes home link (a[href="/"])
-       inside the st.columns() stHorizontalBlock.
+       TOP NAVIGATION BAR
+       Identified by the .top-nav-marker placed in the first column
+       of the navbar's st.columns() row.
     ══════════════════════════════════════════ */
+    .top-nav-marker { display: none; }
 
-    /* Hide the nav-marker placeholder */
-    .nav-marker {
-        display: none !important;
+    /* Brand text on the left of the nav */
+    .nav-brand {
+        font-size: 22px;
+        font-weight: 800;
+        color: #111;
+        letter-spacing: -0.4px;
+        line-height: 40px;
+        white-space: nowrap;
     }
 
-    /* Make the navbar columns row a fixed full-width bar */
-    [data-testid="stHorizontalBlock"]:has(a[href="/"]) {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        width: 100vw !important;
-        max-width: 100vw !important;
-        height: 64px !important;
-        z-index: 999 !important;
+    /* User info block (username + points pill) on the right */
+    .nav-user {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        line-height: 40px;
+    }
+    .nav-username {
+        font-size: 13px;
+        color: #444;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+    .nav-user .points-badge {
+        padding: 3px 11px;
+        font-size: 13px;
+    }
+
+    /* The navbar row itself: subtle bottom border + comfortable padding */
+    [data-testid="stHorizontalBlock"]:has(.top-nav-marker) {
+        align-items: center !important;
+        padding: 6px 0 !important;
+    }
+
+    /* All buttons inside the nav row */
+    [data-testid="stHorizontalBlock"]:has(.top-nav-marker) .stButton > button {
         background: white !important;
-        border-bottom: 1px solid #e8e8e8 !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
-        padding: 0 32px !important;
-        display: flex !important;
-        align-items: center !important;
-        gap: 0 !important;
+        color: #1a1a2e !important;
+        border: 1px solid transparent !important;
+        border-bottom: 2px solid transparent !important;
+        border-radius: 6px !important;
+        font-weight: 500 !important;
+        font-size: 14px !important;
+        padding: 8px 10px !important;
+        box-shadow: none !important;
+        transition: color 0.12s, background 0.12s, border-color 0.12s !important;
     }
-
-    /* First column (logo): flush left, offset right of the sidebar toggle (~48px) */
-    [data-testid="stHorizontalBlock"]:has(a[href="/"]) > [data-testid="column"]:first-child {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: flex-start !important;
-        padding: 0 0 0 48px !important;
-    }
-
-    /* Last column (login/user): flush right */
-    [data-testid="stHorizontalBlock"]:has(a[href="/"]) > [data-testid="column"]:last-child {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: flex-end !important;
-        padding: 0 !important;
-    }
-
-    /* Strip default page-link chrome */
-    [data-testid="stPageLink"] {
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-    [data-testid="stPageLink"] p {
-        margin: 0 !important;
-        line-height: 1 !important;
-    }
-
-    /* Logo link */
-    [data-testid="stPageLink"] a[href="/"] {
-        font-size: 22px !important;
-        font-weight: 800 !important;
-        color: #111 !important;
-        text-decoration: none !important;
-        letter-spacing: -0.4px !important;
-    }
-    [data-testid="stPageLink"] a[href="/"]:hover {
+    [data-testid="stHorizontalBlock"]:has(.top-nav-marker) .stButton > button:hover {
+        background: #f5f9f7 !important;
         color: #00ab6b !important;
-        text-decoration: none !important;
+        border-color: transparent !important;
+        border-bottom-color: rgba(0,171,107,0.35) !important;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+    /* Active page (rendered as type="primary") */
+    [data-testid="stHorizontalBlock"]:has(.top-nav-marker) .stButton > button[kind="primary"] {
+        background: white !important;
+        color: #00ab6b !important;
+        border-color: transparent !important;
+        border-bottom-color: #00ab6b !important;
+        font-weight: 700 !important;
+    }
+    [data-testid="stHorizontalBlock"]:has(.top-nav-marker) .stButton > button[kind="primary"]:hover {
+        background: #f0faf5 !important;
+        color: #00ab6b !important;
     }
 
-    /* Login button */
-    [data-testid="stPageLink"] a[href*="Login"] {
-        background: #00ab6b !important;
-        color: white !important;
-        padding: 10px 26px !important;
-        border-radius: 8px !important;
-        font-weight: 600 !important;
-        font-size: 15px !important;
-        text-decoration: none !important;
-        display: inline-block !important;
-        line-height: 1.5 !important;
-    }
-    [data-testid="stPageLink"] a[href*="Login"]:hover {
-        background: #009960 !important;
-        color: white !important;
-        text-decoration: none !important;
-    }
-
-    /* Right-align the login wrapper */
-    .nav-login-wrap {
-        text-align: right;
-        width: 100%;
-    }
-    .nav-login-wrap [data-testid="stPageLink"] {
-        display: inline-block !important;
+    /* Horizontal divider under the navbar */
+    .nav-divider {
+        height: 1px;
+        background: #e8e8e8;
+        margin: 0 -2.5rem 1.25rem -2.5rem;
     }
 
     /* ══════════════════════════════════════════
