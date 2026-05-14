@@ -20,7 +20,6 @@ def _nav_items(is_admin: bool):
         ("Browse Notes", "pages/2_Browse.py"),
         ("Upload", "pages/3_Upload.py"),
         ("Reviews", "pages/4_Reviews.py"),
-        ("My Account", "pages/5_Profile.py"),
     ]
     if is_admin:
         items.append(("Admin", "pages/6_Admin.py"))
@@ -43,7 +42,7 @@ def render_top_nav(current_page: str = "Home"):
             '<div class="top-nav-marker"></div>'
             f'<div class="nav-brand"><a href="/" target="_self" style="display:inline-block;">'
             f'<img src="data:image/png;base64,{logo}" '
-            f'style="height:52px;vertical-align:middle;object-fit:contain;cursor:pointer;" /></a></div>',
+            f'style="height:100px;vertical-align:middle;object-fit:contain;cursor:pointer;" /></a></div>',
             unsafe_allow_html=True,
         )
 
@@ -60,12 +59,15 @@ def render_top_nav(current_page: str = "Home"):
             sub_info, sub_btn = st.columns([1.3, 1], gap="small")
             with sub_info:
                 st.markdown(
+                    f'<div class="user-badge-marker"></div>'
                     f'<div class="nav-user">'
                     f'<span class="nav-username">👤 {uname}</span>'
                     f'<span class="points-badge">⭐ {pts}</span>'
                     f'</div>',
                     unsafe_allow_html=True,
                 )
+                if st.button(" ", key="nav_user_badge", use_container_width=True):
+                    st.switch_page("pages/5_Profile.py")
             with sub_btn:
                 btype = "primary" if current_page == "Logout" else "secondary"
                 if st.button("Logout", key="nav_logout", type=btype, use_container_width=True):

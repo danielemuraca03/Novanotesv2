@@ -38,20 +38,23 @@ st.markdown(f"""
 # ── Stats row ──────────────────────────────────
 my_notes   = db.get_notes_by_user(st.session_state.user_id)
 my_reviews = db.get_reviews_by_user(st.session_state.user_id)
+my_ratings = db.get_ratings_by_user(st.session_state.user_id)
 
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
 with col1:
     st.metric("Points balance", f"⭐ {user['points']}")
 with col2:
     st.metric("Notes uploaded", len(my_notes))
 with col3:
+    st.metric("Ratings given", len(my_ratings))
+with col4:
     st.metric("Reviews written", len(my_reviews))
 
 st.divider()
 
 # ── Tabs ──────────────────────────────────────
-tab_notes, tab_reviews, tab_history, tab_leaderboard = st.tabs(
-    ["My notes", "My reviews", "Points history", "Leaderboard"]
+tab_notes, tab_ratings, tab_reviews, tab_history, tab_leaderboard = st.tabs(
+    ["My notes", "My ratings", "My reviews", "Points history", "Leaderboard"]
 )
 
 # ── My notes ──
@@ -80,6 +83,32 @@ with tab_notes:
             </div>
             """, unsafe_allow_html=True)
 
+# ── My ratings ──
+with tab_ratings:
+    if not my_ratings:
+        st.info("You haven't rated any notes yet. Browse notes to leave a rating!")
+    else:
+        for rating in my_ratings:
+            stars_html  = "★" * rating["stars"] + "☆" * (5 - rating["stars"])
+            title_esc   = html_lib.escape(rating["title"])
+            course_esc  = html_lib.escape(rating["course"])
+            prof_esc    = html_lib.escape(rating["professor"])
+            date_str    = str(rating["created_at"])[:10]
+
+            st.markdown(f"""
+            <div class="note-card" style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <div style="font-size:15px;font-weight:600;color:#111;margin-bottom:2px;">{title_esc}</div>
+                    <div style="font-size:13px;color:#777;">{course_esc} · Prof. {prof_esc}</div>
+                    <div style="font-size:12px;color:#bbb;margin-top:3px;">Rated on {date_str}</div>
+                </div>
+                <div style="text-align:right;flex-shrink:0;margin-left:16px;">
+                    <span class="stars-sm">{stars_html}</span>
+                    <div style="font-size:12px;color:#aaa;">{rating['stars']}/5</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
 # ── My reviews ──
 with tab_reviews:
     if not my_reviews:
@@ -90,7 +119,7 @@ with tab_reviews:
             course_esc  = html_lib.escape(review["course"])
             prof_esc    = html_lib.escape(review["professor"])
             text_esc    = html_lib.escape(review["text"])
-            sem_str     = f" · {html_lib.escape(review['semester'])}" if review.get("semester") else ""
+            sem_str     = f" · {html_lib.escape(review['semester'])}" if review['semester'] else ""
 
             st.markdown(f"""
             <div class="review-card">

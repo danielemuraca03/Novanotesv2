@@ -51,7 +51,7 @@ with tab_login:
                 st.session_state.is_admin = bool(user["is_admin"])
                 st.session_state.points = user["points"]
                 st.success("Logged in successfully!")
-                st.rerun()
+                st.switch_page("app.py")
 
 # ══════════════════════════════════════════════
 #  REGISTER

@@ -23,6 +23,8 @@ render_top_nav("Upload")
 # ── Login guard ──
 if not st.session_state.get("user_id"):
     st.warning("Please log in to upload notes.")
+    if st.button("Go to login", type="primary"):
+        st.switch_page("pages/1_Login.py")
     st.stop()
 
 # ── Page header ──

@@ -154,14 +154,21 @@ for note in notes:
         if st.session_state.get("user_id") and note["user_id"] != st.session_state.user_id:
             st.divider()
             existing_rating = db.get_user_rating(st.session_state.user_id, note["id"])
-            selected_stars = st.slider(
-                "Rate this note",
-                min_value=1,
-                max_value=5,
-                value=existing_rating or 3,
-                key=f"rate_{note['id']}",
-            )
-            if st.button("Submit rating", key=f"rate_btn_{note['id']}"):
+
+            if st.session_state.pop(f"rate_success_{note['id']}", False):
+                st.success("Rating submitted!")
+
+            with st.form(f"rate_form_{note['id']}"):
+                selected_stars = st.slider(
+                    "Rate this note",
+                    min_value=1,
+                    max_value=5,
+                    value=existing_rating or 3,
+                    key=f"rate_{note['id']}",
+                )
+                rate_submitted = st.form_submit_button("Submit rating", use_container_width=True)
+
+            if rate_submitted:
                 db.add_rating(st.session_state.user_id, note["id"], selected_stars)
                 if selected_stars >= 4 and existing_rating is None:
                     db.award_points(
@@ -169,5 +176,5 @@ for note in notes:
                         POINTS_PER_UPVOTE,
                         f"High rating on: {note['title']}",
                     )
-                st.success("Rating submitted!")
+                st.session_state[f"rate_success_{note['id']}"] = True
                 st.rerun()

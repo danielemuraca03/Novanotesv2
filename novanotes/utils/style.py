@@ -14,8 +14,10 @@ def get_custom_css():
     }
 
     /* ─── Layout ─── */
-    .main .block-container {
-        padding-top: 1.5rem !important;
+    .main .block-container,
+    [data-testid="stMain"] .block-container,
+    [data-testid="stAppViewContainer"] .block-container {
+        padding-top: 0 !important;
         padding-bottom: 4rem !important;
         padding-left: 2.5rem !important;
         padding-right: 2.5rem !important;
@@ -25,6 +27,9 @@ def get_custom_css():
     /* ─── Remove Streamlit chrome ─── */
     #MainMenu, footer { visibility: hidden; }
     header[data-testid="stHeader"] { display: none !important; height: 0 !important; }
+    [data-testid="stDecoration"] { display: none !important; }
+    [data-testid="stToolbar"] { display: none !important; }
+    [data-testid="stAppViewContainer"] > .main { padding-top: 0 !important; }
 
     /* ─── Hide sidebar entirely ─── */
     [data-testid="stSidebar"],
@@ -465,10 +470,21 @@ def get_custom_css():
         font-size: 13px;
     }
 
-    /* The navbar row itself: subtle bottom border + comfortable padding */
+    /* The navbar row itself: fixed at top, full width, sticky header */
     [data-testid="stHorizontalBlock"]:has(.top-nav-marker) {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        z-index: 9999 !important;
+        background: white !important;
+        padding: 10px 2.5rem !important;
+        margin: 0 !important;
+        border-bottom: 1px solid #e8e8e8 !important;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
         align-items: center !important;
-        padding: 6px 0 !important;
+        box-sizing: border-box !important;
     }
 
     /* All buttons inside the nav row */
@@ -505,11 +521,46 @@ def get_custom_css():
         color: #00ab6b !important;
     }
 
-    /* Horizontal divider under the navbar */
+    /* Spacer below the fixed navbar so content isn't hidden behind it */
     .nav-divider {
-        height: 1px;
-        background: #e8e8e8;
-        margin: 0 -2.5rem 1.25rem -2.5rem;
+        height: 86px;
+        background: transparent;
+        margin: 0 0 1rem 0;
+    }
+
+    /* ══════════════════════════════════════════
+       CLICKABLE USER BADGE
+       The user-badge-marker sits in the same Streamlit column as the
+       badge HTML and an invisible st.button that triggers st.switch_page
+       to the profile. We overlay the button on top of the badge so the
+       whole badge surface is clickable.
+    ══════════════════════════════════════════ */
+    [data-testid="column"]:has(.user-badge-marker),
+    [data-testid="stColumn"]:has(.user-badge-marker) {
+        position: relative;
+    }
+    [data-testid="column"]:has(.user-badge-marker) .nav-user,
+    [data-testid="stColumn"]:has(.user-badge-marker) .nav-user {
+        cursor: pointer;
+    }
+    [data-testid="column"]:has(.user-badge-marker) .stButton,
+    [data-testid="stColumn"]:has(.user-badge-marker) .stButton {
+        position: absolute !important;
+        inset: 0 !important;
+        margin: 0 !important;
+        z-index: 5;
+    }
+    [data-testid="column"]:has(.user-badge-marker) .stButton > button,
+    [data-testid="stColumn"]:has(.user-badge-marker) .stButton > button {
+        background: transparent !important;
+        border: none !important;
+        color: transparent !important;
+        width: 100% !important;
+        height: 100% !important;
+        opacity: 0 !important;
+        cursor: pointer !important;
+        padding: 0 !important;
+        box-shadow: none !important;
     }
 
     /* ══════════════════════════════════════════

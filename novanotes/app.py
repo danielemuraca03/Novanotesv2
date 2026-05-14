@@ -122,3 +122,24 @@ else:
         if home_search.strip():
             st.session_state["home_search"] = home_search.strip()
         st.switch_page("pages/2_Browse.py")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # How it works — feature cards
+    st.markdown('<p class="home-search-label">How it works</p>', unsafe_allow_html=True)
+    col1, col2, col3, col4 = st.columns(4)
+    features = [
+        ("🎁", "20 free pts", "Awarded instantly on sign-up"),
+        ("📤", "Earn 10 pts", "Every time you upload a note"),
+        ("📥", "Spend 5 pts", "To download any document"),
+        ("⭐", "Earn 2 pts", "When your notes are rated highly"),
+    ]
+    for col, (icon, title, desc) in zip([col1, col2, col3, col4], features):
+        with col:
+            st.markdown(f"""
+            <div class="feature-card">
+                <div class="fc-icon">{icon}</div>
+                <div class="fc-title">{title}</div>
+                <div class="fc-desc">{desc}</div>
+            </div>
+            """, unsafe_allow_html=True)

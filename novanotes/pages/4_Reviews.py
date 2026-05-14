@@ -14,6 +14,9 @@ render_top_nav("Reviews")
 
 st.markdown("# ⭐ Course & teacher reviews")
 
+if st.session_state.pop("review_publish_success", False):
+    st.success("Review published! Thank you for sharing.")
+
 tab_browse, tab_write = st.tabs(["Browse reviews", "Write a review"])
 
 # ══════════════════════════════════════════════
@@ -42,7 +45,7 @@ with tab_browse:
             prof_esc     = html_lib.escape(review["professor"])
             text_esc     = html_lib.escape(review["text"])
             uname_esc    = html_lib.escape(review["username"])
-            sem_str      = f" · {html_lib.escape(review['semester'])}" if review.get("semester") else ""
+            sem_str      = f" · {html_lib.escape(review['semester'])}" if review['semester'] else ""
             date_str     = str(review["created_at"])[:10]
 
             st.markdown(f"""
@@ -102,5 +105,5 @@ with tab_write:
                 text=rev_text.strip(),
                 stars=rev_stars,
             )
-            st.success("Review published! Thank you for sharing.")
+            st.session_state["review_publish_success"] = True
             st.rerun()

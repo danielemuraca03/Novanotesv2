@@ -113,7 +113,7 @@ def init_tables():
 
 
 # ══════════════════════════════════════════════
-#  USER functions  (Pair 1 builds these)
+#  USER functions  
 # ══════════════════════════════════════════════
 
 def create_user(email, username, password_hash, initial_points=0, is_admin=False):
@@ -209,7 +209,7 @@ def mark_token_used(token):
 
 
 # ══════════════════════════════════════════════
-#  NOTE functions  (Pair 1 builds these)
+#  NOTE functions  
 # ══════════════════════════════════════════════
 
 def save_note(user_id, title, course, professor, year, description, file_path, file_type):
@@ -314,7 +314,7 @@ def get_all_professors():
 
 
 # ══════════════════════════════════════════════
-#  POINTS functions  (Pair 1 builds these)
+#  POINTS functions  
 # ══════════════════════════════════════════════
 
 def award_points(user_id, amount, reason):
@@ -406,8 +406,22 @@ def get_user_rating(user_id, note_id):
         return row["stars"] if row else None
 
 
+def get_ratings_by_user(user_id):
+    """Return all ratings given by a user, joined with note details."""
+    with get_connection() as conn:
+        return conn.execute(
+            """SELECT r.stars, r.created_at,
+                      n.id as note_id, n.title, n.course, n.professor
+               FROM ratings r
+               JOIN notes n ON r.note_id = n.id
+               WHERE r.user_id = ? AND n.is_removed = 0
+               ORDER BY r.created_at DESC""",
+            (user_id,),
+        ).fetchall()
+
+
 # ══════════════════════════════════════════════
-#  REVIEW functions  (Pair 2 builds these)
+#  REVIEW functions  
 # ══════════════════════════════════════════════
 
 def create_review(user_id, course, professor, semester, text, stars):
@@ -460,7 +474,7 @@ def remove_review(review_id):
 
 
 # ══════════════════════════════════════════════
-#  FLAG functions  (Pair 2 builds these)
+#  FLAG functions  
 # ══════════════════════════════════════════════
 
 def create_flag(reporter_id, content_type, content_id, reason):
@@ -494,7 +508,7 @@ def resolve_flag(flag_id):
 
 
 # ══════════════════════════════════════════════
-#  STATS functions  (Pair 2 — admin dashboard)
+#  STATS functions 
 # ══════════════════════════════════════════════
 
 def get_stats():
