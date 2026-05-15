@@ -79,6 +79,8 @@ with tab_browse:
 with tab_write:
     if not st.session_state.get("user_id"):
         st.warning("Please log in to write a review.")
+        if st.button("Go to login", type="primary", key="reviews_go_login"):
+            st.switch_page("pages/1_Login.py")
         st.stop()
 
     with st.form("review_form"):

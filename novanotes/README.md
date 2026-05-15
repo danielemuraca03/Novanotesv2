@@ -24,7 +24,6 @@ cp .streamlit/secrets.toml.example .streamlit/secrets.toml
 # 5. Run the app
 streamlit run app.py
 ```
-
 The app opens at `http://localhost:8501`.
 
 ## Project Structure

@@ -1,6 +1,6 @@
 """
 NovaNotes — Database layer.
-All SQL lives here. Pages import functions, never write raw SQL.
+All SQL is here
 """
 
 import sqlite3
