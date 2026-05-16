@@ -26,8 +26,9 @@ def _ensure_demo_admin():
         )
     else:
         with db.get_connection() as conn:
-            conn.execute(
-                "UPDATE users SET password_hash = ?, is_admin = 1, is_banned = 0 WHERE email = ?",
+            cur = conn.cursor()
+            cur.execute(
+                "UPDATE users SET password_hash = %s, is_admin = TRUE, is_banned = FALSE WHERE email = %s",
                 (pw_hash, DEMO_ADMIN_EMAIL),
             )
 

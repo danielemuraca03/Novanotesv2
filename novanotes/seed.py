@@ -34,7 +34,9 @@ def _get_or_create_seed_user():
 def seed_demo_notes():
     """Load demo notes from seed_data/ if the notes table is empty."""
     with db.get_connection() as conn:
-        count = conn.execute("SELECT COUNT(*) as c FROM notes").fetchone()["c"]
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM notes")
+        count = cur.fetchone()[0]
     if count > 0:
         return
 
