@@ -1,29 +1,14 @@
 """
 NovaNotes — Demo data populator.
 
-Fills the database with realistic-looking demo content under fake
-student-author users: ~12 users, ~14 notes, ~12 reviews, plus ratings.
-
-Usage (from the novanotes/ directory, with the venv active):
-    python populate_demo.py
-
-Safe to re-run: users are upserted by email, and the notes/ratings/reviews
-phase is skipped if any demo user already owns content.
-
-To rebuild demo content from scratch, wipe the demo rows in the
-Supabase SQL editor (admin is preserved):
-    DELETE FROM ratings    WHERE user_id IN (SELECT id FROM users WHERE email LIKE '%@novasbe.pt' AND email <> 'admin@novasbe.pt');
-    DELETE FROM reviews    WHERE user_id IN (SELECT id FROM users WHERE email LIKE '%@novasbe.pt' AND email <> 'admin@novasbe.pt');
-    DELETE FROM points_log WHERE user_id IN (SELECT id FROM users WHERE email LIKE '%@novasbe.pt' AND email <> 'admin@novasbe.pt');
-    DELETE FROM notes      WHERE user_id IN (SELECT id FROM users WHERE email LIKE '%@novasbe.pt' AND email <> 'admin@novasbe.pt');
-    DELETE FROM users      WHERE email LIKE '%@novasbe.pt' AND email <> 'admin@novasbe.pt';
 """
 
+import os
 import random
-
 import bcrypt
-
 import db
+
+DEMO_FILES_DIR = os.path.join(os.path.dirname(__file__), "static", "demo_files")
 
 
 DEMO_USERS = [
@@ -88,6 +73,17 @@ def _demo_content_exists(user_ids):
     return any(db.get_notes_by_user(uid) for uid in user_ids)
 
 
+def _available_demo_pdfs():
+    """Relative paths (from app root) to PDFs bundled in static/demo_files/."""
+    if not os.path.isdir(DEMO_FILES_DIR):
+        return []
+    return sorted(
+        os.path.join("static", "demo_files", f)
+        for f in os.listdir(DEMO_FILES_DIR)
+        if f.lower().endswith(".pdf")
+    )
+
+
 def populate():
     print("Upserting demo users...")
     pw_hash = bcrypt.hashpw(b"demo1234", bcrypt.gensalt()).decode()
@@ -108,12 +104,18 @@ def populate():
 
     if _demo_content_exists(user_ids):
         print("Demo notes/ratings/reviews already exist. Skipping content phase.")
-        print("To rebuild from scratch, see the SQL block in this file's header.")
         return
+
+    demo_pdfs = _available_demo_pdfs()
+    if not demo_pdfs:
+        print(f"No PDFs found in {DEMO_FILES_DIR}.")
+        print("Drop at least one .pdf there so demo downloads work in production, then re-run.")
+        return
+    print(f"Using {len(demo_pdfs)} bundled PDF(s) for demo notes.")
 
     print("Creating notes...")
     note_ids = []
-    for i in range(14):
+    for _ in range(7):
         course, prof = random.choice(COURSES)
         title_tpl, desc = random.choice(NOTE_TEMPLATES)
         nid = db.save_note(
@@ -123,7 +125,7 @@ def populate():
             professor=prof,
             year=random.choice([2023, 2024, 2025]),
             description=desc,
-            file_path=f"uploads/demo_note_{i + 1}.pdf",
+            file_path=random.choice(demo_pdfs),
             file_type="pdf",
         )
         note_ids.append(nid)
@@ -131,7 +133,7 @@ def populate():
 
     print("Creating ratings...")
     rating_count = 0
-    for _ in range(35):
+    for _ in range(10):
         try:
             db.add_rating(
                 user_id=random.choice(user_ids),
@@ -144,7 +146,7 @@ def populate():
     print(f"  {rating_count} ratings inserted (duplicates upsert).")
 
     print("Creating reviews...")
-    for _ in range(12):
+    for _ in range(6):
         course, prof = random.choice(COURSES)
         db.create_review(
             user_id=random.choice(user_ids),
@@ -154,7 +156,7 @@ def populate():
             text=random.choice(REVIEW_TEMPLATES),
             stars=random.choices([3, 4, 5], weights=[1, 3, 4])[0],
         )
-    print("  12 reviews created.")
+    print("  6 reviews created.")
 
     print("\nDone. Refresh the Streamlit app to see the populated demo.")
 
