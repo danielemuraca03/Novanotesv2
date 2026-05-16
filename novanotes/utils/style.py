@@ -583,7 +583,7 @@ def get_custom_css():
         color: transparent !important;
         width: 100% !important;
         height: 100% !important;
-        min-height: 100px !important;
+        min-height: 48px !important;
         opacity: 0 !important;
         cursor: pointer !important;
         padding: 0 !important;

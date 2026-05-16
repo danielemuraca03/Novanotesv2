@@ -1,18 +1,22 @@
 """
 NovaNotes — Demo data populator.
 
-Fills the Supabase database with realistic-looking demo content:
-~12 users, ~14 notes, ~12 reviews, plus ratings.
+Fills the database with realistic-looking demo content under fake
+student-author users: ~12 users, ~14 notes, ~12 reviews, plus ratings.
 
 Usage (from the novanotes/ directory, with the venv active):
     python populate_demo.py
 
-To re-run from a clean slate, wipe the seeded rows from the Supabase SQL editor:
-    DELETE FROM ratings;
-    DELETE FROM reviews;
-    DELETE FROM notes WHERE user_id IN (SELECT id FROM users WHERE email LIKE '%@novasbe.pt' AND email <> 'admin@novasbe.pt');
+Safe to re-run: users are upserted by email, and the notes/ratings/reviews
+phase is skipped if any demo user already owns content.
+
+To rebuild demo content from scratch, wipe the demo rows in the
+Supabase SQL editor (admin is preserved):
+    DELETE FROM ratings    WHERE user_id IN (SELECT id FROM users WHERE email LIKE '%@novasbe.pt' AND email <> 'admin@novasbe.pt');
+    DELETE FROM reviews    WHERE user_id IN (SELECT id FROM users WHERE email LIKE '%@novasbe.pt' AND email <> 'admin@novasbe.pt');
     DELETE FROM points_log WHERE user_id IN (SELECT id FROM users WHERE email LIKE '%@novasbe.pt' AND email <> 'admin@novasbe.pt');
-    DELETE FROM users WHERE email LIKE '%@novasbe.pt' AND email NOT IN ('admin@novasbe.pt', 'seed@novanotes.internal');
+    DELETE FROM notes      WHERE user_id IN (SELECT id FROM users WHERE email LIKE '%@novasbe.pt' AND email <> 'admin@novasbe.pt');
+    DELETE FROM users      WHERE email LIKE '%@novasbe.pt' AND email <> 'admin@novasbe.pt';
 """
 
 import random
@@ -79,17 +83,13 @@ REVIEW_TEMPLATES = [
 SEMESTERS = ["Fall 2024", "Spring 2025", "Fall 2025"]
 
 
-def already_seeded():
-    """Heuristic: if more than the admin + the small startup seed exists, assume populated."""
-    return len(db.get_all_users()) >= 8
+def _demo_content_exists(user_ids):
+    """True if any demo user already owns notes — used to skip the content phase on re-run."""
+    return any(db.get_notes_by_user(uid) for uid in user_ids)
 
 
 def populate():
-    if already_seeded():
-        print("Database already has demo data. Skipping. See header comment to wipe and re-run.")
-        return
-
-    print("Creating users...")
+    print("Upserting demo users...")
     pw_hash = bcrypt.hashpw(b"demo1234", bcrypt.gensalt()).decode()
     user_ids = []
     for email, name in DEMO_USERS:
@@ -104,8 +104,12 @@ def populate():
             initial_points=random.randint(20, 250),
         )
         user_ids.append(uid)
-
     print(f"  {len(user_ids)} users ready.")
+
+    if _demo_content_exists(user_ids):
+        print("Demo notes/ratings/reviews already exist. Skipping content phase.")
+        print("To rebuild from scratch, see the SQL block in this file's header.")
+        return
 
     print("Creating notes...")
     note_ids = []

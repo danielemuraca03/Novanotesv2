@@ -42,7 +42,7 @@ def render_top_nav(current_page: str = "Home"):
             '<div class="top-nav-marker"></div>'
             f'<div class="nav-brand">'
             f'<img src="data:image/png;base64,{logo}" '
-            f'style="height:100px;vertical-align:middle;object-fit:contain;pointer-events:none;" /></div>',
+            f'style="height:48px;vertical-align:middle;object-fit:contain;pointer-events:none;" /></div>',
             unsafe_allow_html=True,
         )
         if st.button(" ", key="nav_logo_home", help="Home", use_container_width=True):

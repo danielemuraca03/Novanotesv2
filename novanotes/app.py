@@ -6,7 +6,6 @@ Run with: streamlit run app.py
 import bcrypt
 import streamlit as st
 import db
-import seed
 from config import DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD, DEMO_ADMIN_USERNAME
 from utils.style import get_custom_css
 from utils.navbar import render_top_nav
@@ -45,7 +44,6 @@ if not st.session_state.get("_bootstrap_done"):
     with st.spinner("Loading NovaNotes…"):
         db.init_tables()
         _ensure_demo_admin()
-        seed.seed_demo_notes()
     st.session_state._bootstrap_done = True
 
 if "user_id" not in st.session_state:
