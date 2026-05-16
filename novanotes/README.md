@@ -17,11 +17,7 @@ source venv/bin/activate        # macOS/Linux
 # 3. Install dependencies
 pip install -r requirements.txt
 
-# 4. Set up secrets (for email verification)
-cp .streamlit/secrets.toml.example .streamlit/secrets.toml
-# Edit secrets.toml with your Gmail app password
-
-# 5. Run the app
+# 4. Run the app
 streamlit run app.py
 ```
 The app opens at `http://localhost:8501`.
@@ -36,18 +32,16 @@ novanotes/
 ├── requirements.txt
 ├── .gitignore
 ├── pages/
-│   ├── 1_Login.py          ← Registration + login + email verify
+│   ├── 1_Login.py          ← Registration + login
 │   ├── 2_Browse.py         ← Search, filter, download notes
 │   ├── 3_Upload.py         ← Upload notes, earn points
 │   ├── 4_Reviews.py        ← Course & teacher reviews
 │   ├── 5_Profile.py        ← User profile, points history, leaderboard
 │   └── 6_Admin.py          ← Moderation panel (admin only)
 ├── utils/
-│   ├── email_verify.py     ← Verification token + SMTP
+│   ├── navbar.py           ← Top navigation bar
 │   └── style.py            ← Custom CSS
-├── uploads/                ← Stored files (gitignored)
-└── .streamlit/
-    └── secrets.toml        ← SMTP credentials (gitignored)
+└── uploads/                ← Stored files (gitignored)
 ```
 
 ## Deploying to Streamlit Cloud
@@ -55,8 +49,7 @@ novanotes/
 1. Push your code to GitHub
 2. Go to [share.streamlit.io](https://share.streamlit.io)
 3. Connect your repo, set `app.py` as the main file
-4. Add your secrets in the app settings (Settings → Secrets)
-5. Deploy!
+4. Deploy!
 
 > ⚠️ SQLite and uploaded files reset when Streamlit Cloud restarts.
 > For a persistent demo, consider replacing SQLite with [Supabase](https://supabase.com) (free PostgreSQL).

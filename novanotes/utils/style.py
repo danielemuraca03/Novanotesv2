@@ -529,11 +529,76 @@ def get_custom_css():
     }
 
     /* ══════════════════════════════════════════
+       CLICKABLE LOGO
+       The logo column contains the .nav-brand markup and an invisible
+       st.button that triggers st.switch_page("app.py") so session state
+       is preserved (a raw <a href="/"> would cause a full page reload).
+       Selectors target the .st-key-nav_logo_home class Streamlit adds to
+       the keyed widget's container — robust against :has() support gaps.
+    ══════════════════════════════════════════ */
+    [data-testid="column"]:has(.nav-brand),
+    [data-testid="stColumn"]:has(.nav-brand) {
+        position: relative;
+    }
+    [data-testid="column"]:has(.nav-brand) [data-testid="stMarkdown"],
+    [data-testid="stColumn"]:has(.nav-brand) [data-testid="stMarkdown"] {
+        pointer-events: none;
+    }
+    [data-testid="column"]:has(.nav-brand) .nav-brand,
+    [data-testid="stColumn"]:has(.nav-brand) .nav-brand {
+        cursor: pointer;
+        pointer-events: none;
+    }
+    [data-testid="column"]:has(.nav-brand) .nav-brand img,
+    [data-testid="stColumn"]:has(.nav-brand) .nav-brand img {
+        pointer-events: none;
+    }
+    .st-key-nav_logo_home {
+        position: absolute !important;
+        inset: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        z-index: 10 !important;
+        pointer-events: auto !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    .st-key-nav_logo_home .stButton,
+    .st-key-nav_logo_home [data-testid="stButton"] {
+        position: absolute !important;
+        inset: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    .st-key-nav_logo_home .stButton > button,
+    .st-key-nav_logo_home button {
+        background: transparent !important;
+        background-color: transparent !important;
+        border: none !important;
+        outline: none !important;
+        color: transparent !important;
+        width: 100% !important;
+        height: 100% !important;
+        min-height: 100px !important;
+        opacity: 0 !important;
+        cursor: pointer !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        pointer-events: auto !important;
+    }
+
+    /* ══════════════════════════════════════════
        CLICKABLE USER BADGE
        The user-badge-marker sits in the same Streamlit column as the
        badge HTML and an invisible st.button that triggers st.switch_page
        to the profile. We overlay the button on top of the badge so the
-       whole badge surface is clickable.
+       whole badge surface is clickable. Targets the .st-key-nav_user_badge
+       container class added by Streamlit for the keyed widget.
     ══════════════════════════════════════════ */
     [data-testid="column"]:has(.user-badge-marker),
     [data-testid="stColumn"]:has(.user-badge-marker) {
@@ -543,23 +608,39 @@ def get_custom_css():
     [data-testid="stColumn"]:has(.user-badge-marker) .nav-user {
         cursor: pointer;
     }
-    [data-testid="column"]:has(.user-badge-marker) .stButton,
-    [data-testid="stColumn"]:has(.user-badge-marker) .stButton {
+    .st-key-nav_user_badge {
         position: absolute !important;
         inset: 0 !important;
         margin: 0 !important;
-        z-index: 5;
-    }
-    [data-testid="column"]:has(.user-badge-marker) .stButton > button,
-    [data-testid="stColumn"]:has(.user-badge-marker) .stButton > button {
+        padding: 0 !important;
+        z-index: 5 !important;
         background: transparent !important;
         border: none !important;
+        box-shadow: none !important;
+    }
+    .st-key-nav_user_badge .stButton,
+    .st-key-nav_user_badge [data-testid="stButton"] {
+        position: absolute !important;
+        inset: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    .st-key-nav_user_badge .stButton > button,
+    .st-key-nav_user_badge button {
+        background: transparent !important;
+        background-color: transparent !important;
+        border: none !important;
+        outline: none !important;
         color: transparent !important;
         width: 100% !important;
         height: 100% !important;
         opacity: 0 !important;
         cursor: pointer !important;
         padding: 0 !important;
+        margin: 0 !important;
         box-shadow: none !important;
     }
 
@@ -571,10 +652,6 @@ def get_custom_css():
         font-weight: 700;
         color: #111;
         margin-bottom: 12px;
-    }
-    /* Cap the search + content width for readability on very wide viewports */
-    [data-testid="stForm"] {
-        max-width: 900px;
     }
     /* Form submit button in search - larger */
     [data-testid="stFormSubmitButton"] > button {

@@ -26,9 +26,10 @@ UPLOAD_FOLDER = "uploads"
 # ──────────────────────────────────────────────
 # Admin
 # ──────────────────────────────────────────────
-ADMIN_EMAILS = ["admin@novasbe.pt"]  # these accounts get admin privileges
+# Hardcoded demo admin — auto-created on startup so anyone can log in as admin.
+# Demo/testing only; remove or change before any real deployment.
+DEMO_ADMIN_EMAIL = "admin@novasbe.pt"
+DEMO_ADMIN_PASSWORD = "admin123"
+DEMO_ADMIN_USERNAME = "Admin"
 
-# ──────────────────────────────────────────────
-# Email verification
-# ──────────────────────────────────────────────
-VERIFICATION_TOKEN_EXPIRY_HOURS = 24
+ADMIN_EMAILS = [DEMO_ADMIN_EMAIL]  # these accounts get admin privileges on signup

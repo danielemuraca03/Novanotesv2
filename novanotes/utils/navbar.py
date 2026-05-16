@@ -40,11 +40,13 @@ def render_top_nav(current_page: str = "Home"):
         logo = _logo_b64()
         st.markdown(
             '<div class="top-nav-marker"></div>'
-            f'<div class="nav-brand"><a href="/" target="_self" style="display:inline-block;">'
+            f'<div class="nav-brand">'
             f'<img src="data:image/png;base64,{logo}" '
-            f'style="height:100px;vertical-align:middle;object-fit:contain;cursor:pointer;" /></a></div>',
+            f'style="height:100px;vertical-align:middle;object-fit:contain;pointer-events:none;" /></div>',
             unsafe_allow_html=True,
         )
+        if st.button(" ", key="nav_logo_home", help="Home", use_container_width=True):
+            st.switch_page("app.py")
 
     for i, (label, target) in enumerate(items):
         with cols[i + 1]:
@@ -69,8 +71,7 @@ def render_top_nav(current_page: str = "Home"):
                 if st.button(" ", key="nav_user_badge", use_container_width=True):
                     st.switch_page("pages/5_Profile.py")
             with sub_btn:
-                btype = "primary" if current_page == "Logout" else "secondary"
-                if st.button("Logout", key="nav_logout", type=btype, use_container_width=True):
+                if st.button("Logout", key="nav_logout", type="secondary", use_container_width=True):
                     for key in ["user_id", "username", "is_admin"]:
                         st.session_state[key] = None
                     st.session_state.is_admin = False

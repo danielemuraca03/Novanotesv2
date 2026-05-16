@@ -98,7 +98,6 @@ with tab_register:
                 is_admin=is_admin,
             )
 
-            db.verify_user(user_id)
             db.award_points(user_id, INITIAL_POINTS, "Signup bonus")
 
             st.success(f"Account created! You received **{INITIAL_POINTS} pts** as a welcome bonus. Log in now.")

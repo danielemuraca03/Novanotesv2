@@ -139,14 +139,16 @@ for note in notes:
                         key=f"dl_{note['id']}",
                         use_container_width=True,
                     ):
-                        db.deduct_points(
+                        if db.deduct_points(
                             st.session_state.user_id,
                             POINTS_PER_DOWNLOAD,
                             f"Downloaded: {note['title']}",
-                        )
-                        st.session_state.points = db.get_points_balance(
-                            st.session_state.user_id
-                        )
+                        ):
+                            st.session_state.points = db.get_points_balance(
+                                st.session_state.user_id
+                            )
+                        else:
+                            st.error("Couldn't deduct points — your balance changed. Try again.")
                 except FileNotFoundError:
                     st.error("File not found on server.")
 

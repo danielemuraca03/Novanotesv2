@@ -22,20 +22,17 @@ def _get_or_create_seed_user():
         return user["id"]
     import bcrypt
     pw_hash = bcrypt.hashpw(b"seed-internal", bcrypt.gensalt()).decode()
-    user_id = db.create_user(
+    return db.create_user(
         email=SEED_USER_EMAIL,
         username="NovaNotes Team",
         password_hash=pw_hash,
         initial_points=0,
         is_admin=False,
     )
-    db.verify_user(user_id)
-    return user_id
 
 
 def seed_demo_notes():
     """Load demo notes from seed_data/ if the notes table is empty."""
-    import sqlite3
     with db.get_connection() as conn:
         count = conn.execute("SELECT COUNT(*) as c FROM notes").fetchone()["c"]
     if count > 0:

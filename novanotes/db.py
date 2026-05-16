@@ -5,7 +5,6 @@ All SQL is here
 
 import sqlite3
 import os
-from datetime import datetime, timedelta
 from contextlib import contextmanager
 
 DB_PATH = "novanotes.db"
@@ -42,19 +41,10 @@ def init_tables():
                 email         TEXT    UNIQUE NOT NULL,
                 username      TEXT    NOT NULL,
                 password_hash TEXT    NOT NULL,
-                is_verified   BOOLEAN DEFAULT 0,
                 is_admin      BOOLEAN DEFAULT 0,
                 is_banned     BOOLEAN DEFAULT 0,
                 points        INTEGER DEFAULT 0,
                 created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-
-            CREATE TABLE IF NOT EXISTS verification_tokens (
-                id         INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id    INTEGER NOT NULL REFERENCES users(id),
-                token      TEXT    UNIQUE NOT NULL,
-                expires_at TIMESTAMP NOT NULL,
-                used       BOOLEAN DEFAULT 0
             );
 
             CREATE TABLE IF NOT EXISTS notes (
@@ -68,6 +58,7 @@ def init_tables():
                 file_path   TEXT    NOT NULL,
                 file_type   TEXT    NOT NULL,
                 is_removed  BOOLEAN DEFAULT 0,
+                flagged     BOOLEAN DEFAULT 0,
                 created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -143,14 +134,6 @@ def get_user_by_id(user_id):
         ).fetchone()
 
 
-def verify_user(user_id):
-    """Mark a user as email-verified."""
-    with get_connection() as conn:
-        conn.execute(
-            "UPDATE users SET is_verified = 1 WHERE id = ?", (user_id,)
-        )
-
-
 def ban_user(user_id):
     """Ban a user account."""
     with get_connection() as conn:
@@ -171,45 +154,12 @@ def get_all_users():
     """Return all users (for admin panel)."""
     with get_connection() as conn:
         return conn.execute(
-            "SELECT id, email, username, is_verified, is_admin, is_banned, points, created_at FROM users ORDER BY created_at DESC"
+            "SELECT id, email, username, is_admin, is_banned, points, created_at FROM users ORDER BY created_at DESC"
         ).fetchall()
 
 
 # ══════════════════════════════════════════════
-#  VERIFICATION TOKEN functions
-# ══════════════════════════════════════════════
-
-def create_verification_token(user_id, token, expiry_hours=24):
-    """Store a verification token for a user."""
-    expires_at = datetime.now() + timedelta(hours=expiry_hours)
-    with get_connection() as conn:
-        conn.execute(
-            """INSERT INTO verification_tokens (user_id, token, expires_at)
-               VALUES (?, ?, ?)""",
-            (user_id, token, expires_at),
-        )
-
-
-def get_verification_token(token):
-    """Return token row if valid (not used, not expired)."""
-    with get_connection() as conn:
-        return conn.execute(
-            """SELECT * FROM verification_tokens
-               WHERE token = ? AND used = 0 AND expires_at > ?""",
-            (token, datetime.now()),
-        ).fetchone()
-
-
-def mark_token_used(token):
-    """Mark a verification token as used."""
-    with get_connection() as conn:
-        conn.execute(
-            "UPDATE verification_tokens SET used = 1 WHERE token = ?", (token,)
-        )
-
-
-# ══════════════════════════════════════════════
-#  NOTE functions  
+#  NOTE functions
 # ══════════════════════════════════════════════
 
 def save_note(user_id, title, course, professor, year, description, file_path, file_type):
@@ -257,22 +207,6 @@ def get_notes(course=None, professor=None, search=None, sort_by="created_at"):
         return conn.execute(query, params).fetchall()
 
 
-def get_note_by_id(note_id):
-    """Return a single note with uploader info and avg rating."""
-    with get_connection() as conn:
-        return conn.execute(
-            """SELECT n.*, u.username,
-                      COALESCE(AVG(r.stars), 0) as avg_rating,
-                      COUNT(r.id) as rating_count
-               FROM notes n
-               JOIN users u ON n.user_id = u.id
-               LEFT JOIN ratings r ON n.id = r.note_id
-               WHERE n.id = ?
-               GROUP BY n.id""",
-            (note_id,),
-        ).fetchone()
-
-
 def get_notes_by_user(user_id):
     """Return all notes uploaded by a specific user."""
     with get_connection() as conn:
@@ -293,6 +227,62 @@ def remove_note(note_id):
         conn.execute(
             "UPDATE notes SET is_removed = 1 WHERE id = ?", (note_id,)
         )
+
+
+def get_all_notes_admin():
+    """Return all non-removed notes with uploader info, for the admin panel."""
+    with get_connection() as conn:
+        return conn.execute(
+            """SELECT n.id, n.user_id, n.title, n.course, n.professor,
+                      n.file_path, n.file_type, n.flagged, n.created_at,
+                      u.username
+               FROM notes n
+               JOIN users u ON n.user_id = u.id
+               WHERE n.is_removed = 0
+               ORDER BY n.flagged DESC, n.created_at DESC"""
+        ).fetchall()
+
+
+def get_flagged_notes():
+    """Return all flagged, non-removed notes with uploader info."""
+    with get_connection() as conn:
+        return conn.execute(
+            """SELECT n.id, n.user_id, n.title, n.course, n.professor,
+                      n.file_path, n.file_type, n.flagged, n.created_at,
+                      u.username
+               FROM notes n
+               JOIN users u ON n.user_id = u.id
+               WHERE n.is_removed = 0 AND n.flagged = 1
+               ORDER BY n.created_at DESC"""
+        ).fetchall()
+
+
+def set_note_flagged(note_id, flagged):
+    """Mark a note as flagged (1) or clear the flag (0)."""
+    with get_connection() as conn:
+        conn.execute(
+            "UPDATE notes SET flagged = ? WHERE id = ?",
+            (1 if flagged else 0, note_id),
+        )
+
+
+def hard_delete_note(note_id):
+    """Permanently delete a note: removes ratings, flags, and the note row.
+    Returns the note's pre-delete row (with file_path, user_id, title) or None."""
+    with get_connection() as conn:
+        note = conn.execute(
+            "SELECT id, user_id, title, file_path FROM notes WHERE id = ?",
+            (note_id,),
+        ).fetchone()
+        if note is None:
+            return None
+        conn.execute("DELETE FROM ratings WHERE note_id = ?", (note_id,))
+        conn.execute(
+            "DELETE FROM flags WHERE content_type = 'note' AND content_id = ?",
+            (note_id,),
+        )
+        conn.execute("DELETE FROM notes WHERE id = ?", (note_id,))
+        return note
 
 
 def get_all_courses():
@@ -347,6 +337,27 @@ def deduct_points(user_id, amount, reason):
             (user_id, -amount, reason),
         )
         return True
+
+
+def revert_upload_points(user_id, amount, reason):
+    """Admin reversal of points earned from an upload.
+    Subtracts the amount and logs a negative entry; clamps the balance to 0
+    so users don't end up with negative points."""
+    with get_connection() as conn:
+        user = conn.execute(
+            "SELECT points FROM users WHERE id = ?", (user_id,)
+        ).fetchone()
+        if user is None:
+            return
+        deducted = min(user["points"], amount)
+        conn.execute(
+            "UPDATE users SET points = points - ? WHERE id = ?",
+            (deducted, user_id),
+        )
+        conn.execute(
+            "INSERT INTO points_log (user_id, amount, reason) VALUES (?, ?, ?)",
+            (user_id, -amount, reason),
+        )
 
 
 def get_points_balance(user_id):
@@ -518,7 +529,7 @@ def get_stats():
         total_notes = conn.execute("SELECT COUNT(*) as c FROM notes WHERE is_removed = 0").fetchone()["c"]
         total_reviews = conn.execute("SELECT COUNT(*) as c FROM reviews WHERE is_removed = 0").fetchone()["c"]
         total_downloads = conn.execute(
-            "SELECT COUNT(*) as c FROM points_log WHERE reason LIKE '%download%'"
+            "SELECT COUNT(*) as c FROM points_log WHERE reason LIKE 'Downloaded: %'"
         ).fetchone()["c"]
         pending_flags = conn.execute(
             "SELECT COUNT(*) as c FROM flags WHERE resolved = 0"

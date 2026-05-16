@@ -142,26 +142,27 @@ with tab_history:
     if not history:
         st.info("No points activity yet.")
     else:
-        rows_html = ""
-        for entry in history:
-            amount   = entry["amount"]
-            sign     = "+" if amount > 0 else ""
-            color    = "#00ab6b" if amount > 0 else "#e53935"
-            reason   = html_lib.escape(entry["reason"])
-            date_str = str(entry["created_at"])[:16]
+        with st.container(border=True):
+            for i, entry in enumerate(history):
+                amount   = entry["amount"]
+                sign     = "+" if amount > 0 else ""
+                reason   = entry["reason"]
+                date_str = str(entry["created_at"])[:16]
 
-            rows_html += f"""
-            <div class="pts-row">
-                <div>
-                    <div style="font-size:14px;color:#222;margin-bottom:2px;">{reason}</div>
-                    <div style="font-size:12px;color:#aaa;">{date_str}</div>
-                </div>
-                <span style="color:{color};font-weight:600;font-size:16px;flex-shrink:0;margin-left:16px;">
-                    {sign}{amount}
-                </span>
-            </div>
-            """
-        st.markdown(f'<div style="background:white;border:1px solid #ebebeb;border-radius:8px;padding:8px 16px;">{rows_html}</div>', unsafe_allow_html=True)
+                col_text, col_amount = st.columns([5, 1], vertical_alignment="center")
+                with col_text:
+                    st.markdown(reason)
+                    st.caption(date_str)
+                with col_amount:
+                    color = "#00ab6b" if amount > 0 else "#e53935"
+                    st.markdown(
+                        f"<div style='text-align:right;color:{color};"
+                        f"font-weight:600;font-size:16px;'>{sign}{amount}</div>",
+                        unsafe_allow_html=True,
+                    )
+
+                if i < len(history) - 1:
+                    st.divider()
 
 # ── Leaderboard ──
 with tab_leaderboard:
