@@ -58,6 +58,14 @@ def _execute(sql, params=None):
             return None
 
 
+def _bust_cache():
+    """Invalidate all @st.cache_data results so the next read re-queries."""
+    try:
+        st.cache_data.clear()
+    except Exception:
+        pass
+
+
 # ──────────────────────────────────────────────
 # Table creation — not needed if you ran supabase_setup.sql,
 # but kept here as a safety net on app startup.
@@ -140,20 +148,23 @@ def init_tables():
 
 def create_user(email, username, password_hash, initial_points=0, is_admin=False):
     """Insert a new user and return their id."""
-    return _execute(
+    new_id = _execute(
         """INSERT INTO users (email, username, password_hash, points, is_admin)
            VALUES (%s, %s, %s, %s, %s) RETURNING id""",
         (email, username, password_hash, initial_points, is_admin),
     )
+    _bust_cache()
+    return new_id
 
 
 def get_user_by_email(email):
-    """Return a user row by email, or None."""
+    """Return a user row by email, or None. Not cached: used by login auth."""
     return _query(
         "SELECT * FROM users WHERE email = %s", (email,), fetch="one"
     )
 
 
+@st.cache_data(ttl=60, show_spinner=False)
 def get_user_by_id(user_id):
     """Return a user row by id, or None."""
     return _query(
@@ -163,12 +174,15 @@ def get_user_by_id(user_id):
 
 def ban_user(user_id):
     _execute("UPDATE users SET is_banned = TRUE WHERE id = %s", (user_id,))
+    _bust_cache()
 
 
 def unban_user(user_id):
     _execute("UPDATE users SET is_banned = FALSE WHERE id = %s", (user_id,))
+    _bust_cache()
 
 
+@st.cache_data(ttl=60, show_spinner=False)
 def get_all_users():
     return _query(
         """SELECT id, email, username, is_admin, is_banned, points, created_at
@@ -181,13 +195,16 @@ def get_all_users():
 # ══════════════════════════════════════════════
 
 def save_note(user_id, title, course, professor, year, description, file_path, file_type):
-    return _execute(
+    new_id = _execute(
         """INSERT INTO notes (user_id, title, course, professor, year, description, file_path, file_type)
            VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
         (user_id, title, course, professor, year, description, file_path, file_type),
     )
+    _bust_cache()
+    return new_id
 
 
+@st.cache_data(ttl=60, show_spinner=False)
 def get_notes(course=None, professor=None, search=None, sort_by="created_at"):
     query = """
         SELECT n.*, u.username,
@@ -220,6 +237,7 @@ def get_notes(course=None, professor=None, search=None, sort_by="created_at"):
     return _query(query, params)
 
 
+@st.cache_data(ttl=60, show_spinner=False)
 def get_notes_by_user(user_id):
     return _query(
         """SELECT n.*, COALESCE(AVG(r.stars), 0) as avg_rating, COUNT(r.id) as rating_count
@@ -234,8 +252,10 @@ def get_notes_by_user(user_id):
 
 def remove_note(note_id):
     _execute("UPDATE notes SET is_removed = TRUE WHERE id = %s", (note_id,))
+    _bust_cache()
 
 
+@st.cache_data(ttl=60, show_spinner=False)
 def get_all_notes_admin():
     return _query(
         """SELECT n.id, n.user_id, n.title, n.course, n.professor,
@@ -248,6 +268,7 @@ def get_all_notes_admin():
     )
 
 
+@st.cache_data(ttl=60, show_spinner=False)
 def get_flagged_notes():
     return _query(
         """SELECT n.id, n.user_id, n.title, n.course, n.professor,
@@ -265,6 +286,7 @@ def set_note_flagged(note_id, flagged):
         "UPDATE notes SET flagged = %s WHERE id = %s",
         (flagged, note_id),
     )
+    _bust_cache()
 
 
 def hard_delete_note(note_id):
@@ -284,9 +306,11 @@ def hard_delete_note(note_id):
             (note_id,),
         )
         cur.execute("DELETE FROM notes WHERE id = %s", (note_id,))
+    _bust_cache()
     return note
 
 
+@st.cache_data(ttl=300, show_spinner=False)
 def get_all_courses():
     rows = _query(
         "SELECT DISTINCT course FROM notes WHERE is_removed = FALSE ORDER BY course"
@@ -294,6 +318,7 @@ def get_all_courses():
     return [row["course"] for row in rows]
 
 
+@st.cache_data(ttl=300, show_spinner=False)
 def get_all_professors():
     rows = _query(
         "SELECT DISTINCT professor FROM notes WHERE is_removed = FALSE ORDER BY professor"
@@ -316,6 +341,7 @@ def award_points(user_id, amount, reason):
             "INSERT INTO points_log (user_id, amount, reason) VALUES (%s, %s, %s)",
             (user_id, amount, reason),
         )
+    _bust_cache()
 
 
 def deduct_points(user_id, amount, reason):
@@ -333,7 +359,8 @@ def deduct_points(user_id, amount, reason):
             "INSERT INTO points_log (user_id, amount, reason) VALUES (%s, %s, %s)",
             (user_id, -amount, reason),
         )
-        return True
+    _bust_cache()
+    return True
 
 
 def revert_upload_points(user_id, amount, reason):
@@ -352,15 +379,18 @@ def revert_upload_points(user_id, amount, reason):
             "INSERT INTO points_log (user_id, amount, reason) VALUES (%s, %s, %s)",
             (user_id, -amount, reason),
         )
+    _bust_cache()
 
 
 def get_points_balance(user_id):
+    """Not cached: read-after-write hot path (called right after award/deduct)."""
     row = _query(
         "SELECT points FROM users WHERE id = %s", (user_id,), fetch="one"
     )
     return row["points"] if row else 0
 
 
+@st.cache_data(ttl=60, show_spinner=False)
 def get_points_history(user_id):
     return _query(
         "SELECT * FROM points_log WHERE user_id = %s ORDER BY created_at DESC",
@@ -368,6 +398,7 @@ def get_points_history(user_id):
     )
 
 
+@st.cache_data(ttl=300, show_spinner=False)
 def get_leaderboard(limit=10):
     return _query(
         """SELECT id, username, points
@@ -393,8 +424,10 @@ def add_rating(user_id, note_id, stars):
                DO UPDATE SET stars = EXCLUDED.stars""",
             (user_id, note_id, stars),
         )
+    _bust_cache()
 
 
+@st.cache_data(ttl=60, show_spinner=False)
 def get_user_rating(user_id, note_id):
     row = _query(
         "SELECT stars FROM ratings WHERE user_id = %s AND note_id = %s",
@@ -403,6 +436,7 @@ def get_user_rating(user_id, note_id):
     return row["stars"] if row else None
 
 
+@st.cache_data(ttl=60, show_spinner=False)
 def get_ratings_by_user(user_id):
     return _query(
         """SELECT r.stars, r.created_at,
@@ -420,13 +454,16 @@ def get_ratings_by_user(user_id):
 # ══════════════════════════════════════════════
 
 def create_review(user_id, course, professor, semester, text, stars):
-    return _execute(
+    new_id = _execute(
         """INSERT INTO reviews (user_id, course, professor, semester, text, stars)
            VALUES (%s, %s, %s, %s, %s, %s) RETURNING id""",
         (user_id, course, professor, semester, text, stars),
     )
+    _bust_cache()
+    return new_id
 
 
+@st.cache_data(ttl=60, show_spinner=False)
 def get_reviews(course=None, professor=None):
     query = """
         SELECT rv.*, u.username
@@ -445,6 +482,7 @@ def get_reviews(course=None, professor=None):
     return _query(query, params)
 
 
+@st.cache_data(ttl=60, show_spinner=False)
 def get_reviews_by_user(user_id):
     return _query(
         "SELECT * FROM reviews WHERE user_id = %s AND is_removed = FALSE ORDER BY created_at DESC",
@@ -454,6 +492,7 @@ def get_reviews_by_user(user_id):
 
 def remove_review(review_id):
     _execute("UPDATE reviews SET is_removed = TRUE WHERE id = %s", (review_id,))
+    _bust_cache()
 
 
 # ══════════════════════════════════════════════
@@ -466,8 +505,10 @@ def create_flag(reporter_id, content_type, content_id, reason):
            VALUES (%s, %s, %s, %s)""",
         (reporter_id, content_type, content_id, reason),
     )
+    _bust_cache()
 
 
+@st.cache_data(ttl=60, show_spinner=False)
 def get_pending_flags():
     return _query(
         """SELECT f.*, u.username as reporter_name
@@ -480,12 +521,14 @@ def get_pending_flags():
 
 def resolve_flag(flag_id):
     _execute("UPDATE flags SET resolved = TRUE WHERE id = %s", (flag_id,))
+    _bust_cache()
 
 
 # ══════════════════════════════════════════════
 #  STATS functions
 # ══════════════════════════════════════════════
 
+@st.cache_data(ttl=300, show_spinner=False)
 def get_stats():
     with get_connection() as conn:
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)

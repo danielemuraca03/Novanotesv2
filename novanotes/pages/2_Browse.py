@@ -39,12 +39,13 @@ with col_sort:
     sort_by = st.selectbox("Sort", ["Newest", "Top rated"], label_visibility="collapsed")
 
 # ── Fetch ──────────────────────────────────────────
-notes = db.get_notes(
-    course=selected_course if selected_course != "All" else None,
-    professor=selected_prof if selected_prof != "All" else None,
-    search=search_query if search_query else None,
-    sort_by="rating" if sort_by == "Top rated" else "created_at",
-)
+with st.spinner("Loading notes…"):
+    notes = db.get_notes(
+        course=selected_course if selected_course != "All" else None,
+        professor=selected_prof if selected_prof != "All" else None,
+        search=search_query if search_query else None,
+        sort_by="rating" if sort_by == "Top rated" else "created_at",
+    )
 
 if not notes:
     st.info("No notes found. Try adjusting your filters or be the first to upload!")
@@ -52,6 +53,15 @@ if not notes:
 
 st.caption(f"{len(notes)} note{'s' if len(notes) != 1 else ''} found")
 st.markdown("<br>", unsafe_allow_html=True)
+
+# Pre-fetch per-user state once so per-note rendering doesn't fire N queries.
+_user_id = st.session_state.get("user_id")
+if _user_id:
+    _my_ratings_by_note = {r["note_id"]: r["stars"] for r in db.get_ratings_by_user(_user_id)}
+    _my_points_balance  = db.get_points_balance(_user_id)
+else:
+    _my_ratings_by_note = {}
+    _my_points_balance  = 0
 
 
 # ── Helpers ───────────────────────────────────────
@@ -121,10 +131,9 @@ for note in notes:
             except FileNotFoundError:
                 st.error("File not found on server.")
         else:
-            current_points = db.get_points_balance(st.session_state.user_id)
-            if current_points < POINTS_PER_DOWNLOAD:
+            if _my_points_balance < POINTS_PER_DOWNLOAD:
                 st.error(
-                    f"Not enough points. You have {current_points}, need {POINTS_PER_DOWNLOAD}."
+                    f"Not enough points. You have {_my_points_balance}, need {POINTS_PER_DOWNLOAD}."
                 )
             else:
                 try:
@@ -155,7 +164,7 @@ for note in notes:
         # ── Rating ──
         if st.session_state.get("user_id") and note["user_id"] != st.session_state.user_id:
             st.divider()
-            existing_rating = db.get_user_rating(st.session_state.user_id, note["id"])
+            existing_rating = _my_ratings_by_note.get(note["id"])
 
             if st.session_state.pop(f"rate_success_{note['id']}", False):
                 st.success("Rating submitted!")

@@ -41,9 +41,12 @@ st.set_page_config(
 
 st.markdown(get_custom_css(), unsafe_allow_html=True)
 
-db.init_tables()
-_ensure_demo_admin()
-seed.seed_demo_notes()
+if not st.session_state.get("_bootstrap_done"):
+    with st.spinner("Loading NovaNotes…"):
+        db.init_tables()
+        _ensure_demo_admin()
+        seed.seed_demo_notes()
+    st.session_state._bootstrap_done = True
 
 if "user_id" not in st.session_state:
     st.session_state.user_id = None
