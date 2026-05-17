@@ -1,7 +1,5 @@
 """
 NovaNotes — Database layer (Supabase PostgreSQL version).
-Drop-in replacement for the SQLite db.py.
-All SQL is here. Pages import functions, never write raw SQL.
 """
 
 import psycopg2

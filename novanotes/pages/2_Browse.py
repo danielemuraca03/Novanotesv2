@@ -2,10 +2,16 @@
 NovaNotes — Page 2: Browse Notes
 """
 
+import os
 import html as html_lib
 import streamlit as st
 import db
-from config import POINTS_PER_DOWNLOAD, POINTS_PER_UPVOTE
+from config import APP_ROOT, POINTS_PER_DOWNLOAD, POINTS_PER_UPVOTE
+
+
+def _resolve(file_path: str) -> str:
+    """Anchor repo-relative paths to the novanotes/ dir so CWD doesn't matter."""
+    return file_path if os.path.isabs(file_path) else os.path.join(APP_ROOT, file_path)
 from utils.style import get_custom_css
 from utils.navbar import render_top_nav
 
@@ -119,7 +125,7 @@ for note in notes:
             st.warning("Log in to download this note.")
         elif note["user_id"] == st.session_state.user_id:
             try:
-                with open(note["file_path"], "rb") as f:
+                with open(_resolve(note["file_path"]), "rb") as f:
                     st.download_button(
                         "📥 Download (free — your note)",
                         data=f.read(),
@@ -137,7 +143,7 @@ for note in notes:
                 )
             else:
                 try:
-                    with open(note["file_path"], "rb") as f:
+                    with open(_resolve(note["file_path"]), "rb") as f:
                         file_data = f.read()
 
                     if st.download_button(

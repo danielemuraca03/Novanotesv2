@@ -3,6 +3,13 @@ NovaNotes — Shared configuration constants.
 Edit these values to tune the platform behaviour.
 """
 
+import os
+
+# Absolute path to the novanotes/ package — used to resolve file paths
+# stored as repo-relative strings (e.g. "static/demo_files/foo.pdf"), so
+# downloads work regardless of the process's current working directory.
+APP_ROOT = os.path.dirname(os.path.abspath(__file__))
+
 # ──────────────────────────────────────────────
 # University email gate
 # ──────────────────────────────────────────────
