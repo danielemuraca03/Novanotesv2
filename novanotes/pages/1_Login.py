@@ -23,6 +23,10 @@ st.markdown("# 🔐 Login or Register")
 st.caption(f"Access is restricted to **@{ALLOWED_EMAIL_DOMAIN}** addresses.")
 st.markdown("<br>", unsafe_allow_html=True)
 
+_signup_pts = st.session_state.pop("signup_success_pts", None)
+if _signup_pts is not None:
+    st.success(f"Account created! You received **{_signup_pts} pts** as a welcome bonus. Log in now.")
+
 tab_login, tab_register = st.tabs(["Login", "Create account"])
 
 # ══════════════════════════════════════════════
@@ -100,4 +104,5 @@ with tab_register:
 
             db.award_points(user_id, INITIAL_POINTS, "Signup bonus")
 
-            st.success(f"Account created! You received **{INITIAL_POINTS} pts** as a welcome bonus. Log in now.")
+            st.session_state["signup_success_pts"] = INITIAL_POINTS
+            st.rerun()
