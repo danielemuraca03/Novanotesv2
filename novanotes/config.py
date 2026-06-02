@@ -1,4 +1,6 @@
-"""
+git add .
+git commit -m "save work before codespace deletion"
+git push"""
 NovaNotes — Shared configuration constants.
 Edit these values to tune the platform behaviour.
 """
